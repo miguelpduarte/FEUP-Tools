@@ -260,8 +260,8 @@ const App = () => {
             <Table
                 rowKey="codigo"
                 columns={[
-                    { title: "Code", dataIndex: "codigo", sorter: (a, b) => a.codigo > b.codigo },
-                    { title: "Name", dataIndex: "nome", sorter: (a, b) => a.nome > b.nome },
+                    { title: "Code", dataIndex: "codigo", sorter: (a, b) => Number(a.codigo) - Number(b.codigo) },
+                    { title: "Name", dataIndex: "nome", sorter: (a, b) => a.nome.localeCompare(b.nome) },
                 ]}
                 dataSource={intersectedStudents}
                 title={() => `Students in all of the selected course units (${intersectedStudents.length})`}
