@@ -257,15 +257,19 @@ const App = () => {
                 </Col>
             </Row>}
             {intersectedStudents?.length &&
-            <Table
-                rowKey="codigo"
-                columns={[
-                    { title: "Code", dataIndex: "codigo", sorter: (a, b) => Number(a.codigo) - Number(b.codigo) },
-                    { title: "Name", dataIndex: "nome", sorter: (a, b) => a.nome.localeCompare(b.nome) },
-                ]}
-                dataSource={intersectedStudents}
-                title={() => `Students in all of the selected course units (${intersectedStudents.length})`}
-            />
+            <Row>
+                <Col span={16}>
+                    <Table
+                        rowKey="codigo"
+                        columns={[
+                            { title: "Code", dataIndex: "codigo", sorter: (a, b) => Number(a.codigo) - Number(b.codigo) },
+                            { title: "Name", dataIndex: "nome", sorter: (a, b) => a.nome.localeCompare(b.nome) },
+                        ]}
+                        dataSource={intersectedStudents}
+                        title={() => `Students in all of the selected course units (${intersectedStudents.length})`}
+                    />
+                </Col>
+            </Row>
             }
         </Layout>
     );
