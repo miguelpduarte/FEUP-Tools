@@ -138,7 +138,7 @@ const App = () => {
                                 <Option key={courseUnit.ocorr_id} value={courseUnit.ocorr_id}>
                                     {/* TODO: Fix bug:
                                 when changing the selectedCourse every previous existing option rerenders and as such "changes course" */}
-                                    {`${courseUnit.nome} [${courseUnit.codigo}] (${courseUnit.periodo}) @ ${selectedCourse.sigla}`}
+                                    {`${courseUnit.nome} [${courseUnit.codigo}] (${courseUnit.periodo}) @ ${selectedCourse?.sigla}`}
                                 </Option>
                             ))}
                         </Select>
