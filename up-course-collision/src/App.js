@@ -3,6 +3,7 @@ import { Select, Row, Col, Spin, Space, Input, Typography } from "antd";
 
 import "./App.css";
 import faculty_data from "./faculty_ids.json";
+import urlHelpers from "./urlHelper";
 import Layout from "./Layout";
 
 const { Option } = Select;
@@ -30,13 +31,9 @@ const App = () => {
             setFacultyCoursesLoading(true);
 
             const instId = faculty_data[selectedFaculty];
-            const res = await fetch(`
-/sigarra-api/${selectedFaculty}/pt/cur_lov_geral.get_json_cursos_ga?pv_search_inst_adm=
-&pv_search_alect=${schoolYear}
-&pv_search_inst_id=${instId}
-&pv_search_cod=
-&pv_search_nome=
-&pv_search_sigla=`);
+            const url = urlHelpers.FACULTY_COURSES(selectedFaculty, schoolYear, instId);
+            const res = await fetch(url);
+
             const buffer = await res.arrayBuffer();
             const decoder = new TextDecoder("iso-8859-1");
             const text = decoder.decode(buffer);
@@ -58,7 +55,7 @@ const App = () => {
         const fetchCourseCourseUnits = async () => {
             setCourseCourseUnitsLoading(true);
 
-            const res = await fetch(`/sigarra-api/${selectedFaculty}/pt/mob_ucurr_geral.pesquisa?pv_ano_lectivo=${schoolYear}&pv_curso_id=${selectedCourse.id}`);
+            const res = await fetch(urlHelpers.COURSE_UNITS(selectedFaculty, schoolYear, selectedCourse.id));
             const data = await res.json();
 
             // Number of pages to load
@@ -66,8 +63,8 @@ const App = () => {
             // Storing initial data
             let courseUnits = data.resultados;
             // Starting at page two since page one was already loaded
-            for (let page_number = 2; page_number <= total_n_pages; ++page_number) {
-                const res = await fetch(`/sigarra-api/${selectedFaculty}/pt/mob_ucurr_geral.pesquisa?pv_ano_lectivo=${schoolYear}&pv_curso_id=${selectedCourse.id}&pv_pag=${page_number}`);
+            for (let pageNumber = 2; pageNumber <= total_n_pages; ++pageNumber) {
+                const res = await fetch(urlHelpers.COURSE_UNITS(selectedFaculty, schoolYear, selectedCourse.id, pageNumber));
                 const data = await res.json();
                 courseUnits = [...courseUnits, ...data.resultados];
             }
