@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Select, Row, Col, Spin, Space, Input, Typography } from "antd";
+import React, { useState, useEffect, useCallback } from "react";
+import { Select, Row, Col, Spin, Space, Input, Typography, Button, Table } from "antd";
 
 import "./App.css";
 import faculty_data from "./faculty_ids.json";
@@ -11,6 +11,11 @@ const { Option } = Select;
 // TODO: Get from input or make it so that it is always the current year
 const schoolYear = 2019;
 
+// Reads: Pick only the elements of arr1 for which there is at least one element in arr2 with the same "codigo"
+const intersectStudentArrays = (arr1, arr2) => arr1.filter((el1) => arr2.some((el2) => el1.codigo === el2.codigo));
+
+// TODO: Try catch on fetches and handling when the response cannot be parsed (banhada do sigarra)
+
 const App = () => {
     const [selectedFaculty, setSelectedFaculty] = useState();
     const [facultyCoursesLoading, setFacultyCoursesLoading] = useState(false);
@@ -19,6 +24,11 @@ const App = () => {
     const [courseCourseUnitsLoading, setCourseCourseUnitsLoading] = useState(false);
     const [courseCourseUnits, setCourseCourseUnits] = useState([]);
     const [selectedCourseUnits, setSelectedCourseUnits] = useState();
+    const [username, setUsername] = useState();
+    const [password, setPassword] = useState();
+    const [loginAndStudentsLoading, setLoginAndStudentsLoading] = useState(false);
+    const [intersectedStudents, setIntersectedStudents] = useState();
+    const [error, setError] = useState();
 
     // Loading faculty's courses for the course dropdown
     useEffect(() => {
@@ -75,6 +85,42 @@ const App = () => {
 
         fetchCourseCourseUnits();
     }, [selectedFaculty, selectedCourse]);
+
+    const loginAndFetchStudents = useCallback(async () => {
+        setLoginAndStudentsLoading(true);
+
+        // Login
+        const loginUrl = urlHelpers.LOGIN(selectedFaculty, username, password);
+        const loginRes = await fetch(loginUrl);
+        const loginData = await loginRes.json();
+
+        if (loginData.authenticated !== true) {
+            setError({
+                msg: "Authentication Problem. Most likely wrong username/password",
+                sigarra_msg: `${loginData.erro}: ${loginData.erro_msg}`,
+            });
+            return;
+        }
+
+        // Fetch students for each UC (occurence)
+        const ucStudents = await Promise.all(selectedCourseUnits.map(async (courseUnitOccurenceId) => {
+            const url = urlHelpers.STUDENTS_IN_UC(selectedFaculty, courseUnitOccurenceId);
+            const res = await fetch(url);
+            const data = await res.json();
+            return data;
+        }));
+
+        console.log(ucStudents);
+
+        // Merge students
+        const intersectedStudents = ucStudents.reduce(intersectStudentArrays);
+        setIntersectedStudents(intersectedStudents);
+
+        console.log(intersectedStudents);
+
+        // :D
+        setLoginAndStudentsLoading(false);
+    }, [password, username, selectedFaculty, selectedCourseUnits]);
 
     return (
         <Layout>
@@ -145,13 +191,13 @@ const App = () => {
                     </Spin>
                 </Col>
             </Row>
-            <Row gutter={[8, 8]}>
+            <Row gutter={[8, 32]}>
                 <Col span={14}>
                     <Row gutter={[0, 16]}>
                         <Col span={24}>
                             <Space direction="vertical">
-                                <Input placeholder="SIGARRA Username" />
-                                <Input.Password placeholder="SIGARRA Password" />
+                                <Input onChange={(e) => setUsername(e.target.value)} placeholder="SIGARRA Username" />
+                                <Input.Password onChange={(e) => setPassword(e.target.value)} placeholder="SIGARRA Password" />
                             </Space>
                         </Col>
                     </Row>
@@ -159,7 +205,8 @@ const App = () => {
                         <Col span={24}>
                             <Space size="small" direction="vertical">
                                 <Typography.Text>
-                                    This data is used due to login being necessary for the next step of the process.
+                                    Login with SIGARRA is necessary for the next step of the process
+                                    (fetching students in each course unit).
                                 </Typography.Text>
                                 <Typography.Text>
                                     If you are unsure of what I do with this data, you can&nbsp;
@@ -176,6 +223,50 @@ const App = () => {
                     </Row>
                 </Col>
             </Row>
+            <Row gutter={[8, 32]}>
+                <Col span={12}>
+                    <Button
+                        type="primary"
+                        disabled={!username || !password || !selectedCourseUnits?.length}
+                        loading={loginAndStudentsLoading}
+                        onClick={loginAndFetchStudents}
+                    >
+                        Login and fetch students that are in the selected courses
+                    </Button>
+                </Col>
+            </Row>
+            {error &&
+            <Row>
+                <Col span={16}>
+                    <Typography.Text type="danger">
+                        Error:&nbsp;
+                    </Typography.Text>
+                    <Typography.Text>
+                        {error.msg}
+                    </Typography.Text>
+                    {error?.sigarra_msg &&
+                    <>
+                        <br/>
+                        <Typography.Text type="warning">
+                            SIGARRA says:&nbsp;
+                        </Typography.Text>
+                        <Typography.Text>
+                            {error.sigarra_msg}
+                        </Typography.Text>
+                    </>}
+                </Col>
+            </Row>}
+            {intersectedStudents?.length &&
+            <Table
+                rowKey="codigo"
+                columns={[
+                    { title: "Code", dataIndex: "codigo", sorter: (a, b) => a.codigo > b.codigo },
+                    { title: "Name", dataIndex: "nome", sorter: (a, b) => a.nome > b.nome },
+                ]}
+                dataSource={intersectedStudents}
+                title={() => `Students in all of the selected course units (${intersectedStudents.length})`}
+            />
+            }
         </Layout>
     );
 };
