@@ -10,8 +10,6 @@
 
 # production
 /build
-# Allowing netlify redirects file to be version controlled
-!build/_redirects
 
 # misc
 .DS_Store
