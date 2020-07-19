@@ -99,6 +99,7 @@ const App = () => {
                 msg: "Authentication Problem. Most likely wrong username/password",
                 sigarra_msg: `${loginData.erro}: ${loginData.erro_msg}`,
             });
+            setLoginAndStudentsLoading(false);
             return;
         }
 
@@ -110,15 +111,12 @@ const App = () => {
             return data;
         }));
 
-        console.log(ucStudents);
-
         // Merge students
         const intersectedStudents = ucStudents.reduce(intersectStudentArrays);
         setIntersectedStudents(intersectedStudents);
 
-        console.log(intersectedStudents);
-
-        // :D
+        // Clear error and loading
+        setError(undefined);
         setLoginAndStudentsLoading(false);
     }, [password, username, selectedFaculty, selectedCourseUnits]);
 
