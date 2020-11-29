@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Select, Row, Col, Spin, Space, Input, Typography, Button, Table } from "antd";
+import { Select, Row, Col, Spin, Space, Input, Typography, Button, Table, DatePicker } from "antd";
 
 import "./App.css";
 import faculty_data from "./faculty_ids.json";
@@ -8,9 +8,6 @@ import Layout from "./Layout";
 
 const { Option } = Select;
 
-// TODO: Get from input or make it so that it is always the current year
-const schoolYear = 2019;
-
 // Reads: Pick only the elements of arr1 for which there is at least one element in arr2 with the same "codigo"
 const intersectStudentArrays = (arr1, arr2) => arr1.filter((el1) => arr2.some((el2) => el1.codigo === el2.codigo));
 
@@ -18,6 +15,7 @@ const intersectStudentArrays = (arr1, arr2) => arr1.filter((el1) => arr2.some((e
 
 const App = () => {
     const [selectedFaculty, setSelectedFaculty] = useState();
+    const [schoolYear, setSchoolYear] = useState();
     const [facultyCoursesLoading, setFacultyCoursesLoading] = useState(false);
     const [facultyCourses, setFacultyCourses] = useState([]);
     const [selectedCourse, setSelectedCourse] = useState();
@@ -32,8 +30,8 @@ const App = () => {
 
     // Loading faculty's courses for the course dropdown
     useEffect(() => {
-        // Prevent fetching on initial mount
-        if (!selectedFaculty) {
+        // Prevent fetching on initial mount or when the year of faculty is changed but not both are set yet
+        if (!selectedFaculty || !schoolYear) {
             return;
         }
 
@@ -53,7 +51,7 @@ const App = () => {
         };
 
         fetchFacultyCourses();
-    }, [selectedFaculty]);
+    }, [schoolYear, selectedFaculty]);
 
     // Loading course's course units
     useEffect(() => {
@@ -84,7 +82,7 @@ const App = () => {
         };
 
         fetchCourseCourseUnits();
-    }, [selectedFaculty, selectedCourse]);
+    }, [selectedFaculty, selectedCourse, schoolYear]);
 
     const loginAndFetchStudents = useCallback(async () => {
         setLoginAndStudentsLoading(true);
@@ -140,6 +138,20 @@ const App = () => {
                             </Option>
                         ))}
                     </Select>
+                </Col>
+            </Row>
+            <Row gutter={[8, 8]}>
+                <Col span={12}>
+                    <DatePicker
+                        picker="year"
+                        style={{ width: "100%" }}
+                        placeholder="Select a School Year"
+                        onChange={(date) => {
+                            setSchoolYear(date.year());
+                            // Resetting to prevent unnecessary fetching when year changes
+                            setSelectedCourse(undefined);
+                        }}
+                    />
                 </Col>
             </Row>
             <Row gutter={[8, 8]}>
